@@ -30,8 +30,7 @@ add_definitions (${SEQAN_DEFINITIONS})
 
 # Update the list of file names below if you add source files to your test.
 add_executable (test_align_profile
-                test_align_profile.cpp
-                test_align_profile.h)
+                test_align_profile.cpp)
 
 # Add dependencies found by find_package (SeqAn).
 target_link_libraries (test_align_profile ${SEQAN_LIBRARIES})

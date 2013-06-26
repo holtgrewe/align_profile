@@ -1,5 +1,5 @@
 // ==========================================================================
-//                               align_profile
+//                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
 // Copyright (c) 2006-2013, Knut Reinert, FU Berlin
 // All rights reserved.
@@ -31,7 +31,7 @@
 // ==========================================================================
 // Author: Manuel Holtgrewe <manuel.holtgrewe@fu-berlin.de>
 // ==========================================================================
-// Facade header for module align_profile.
+// The align_profile module contains code for profile-to-sequence alignment.
 // ==========================================================================
 
 #ifndef SANDBOX_ALIGN_PROFILE_INCLUDE_SEQAN_ALIGN_PROFILE_H_
@@ -44,11 +44,13 @@
 #include <seqan/basic.h>
 #include <seqan/file.h>
 #include <seqan/sequence.h>
+#include <seqan/consensus.h>
 
 // ===========================================================================
 // First Header Group.
 // ===========================================================================
 
-#include <seqan/align_profile/align_profile_base.h>
+#include <seqan/align_profile/align_profile_score_profile_seq.h>
+#include <seqan/align_profile/add_to_profile.h>
 
 #endif  // SANDBOX_ALIGN_PROFILE_INCLUDE_SEQAN_ALIGN_PROFILE_H_

@@ -1,5 +1,5 @@
 // ==========================================================================
-//                               align_profile
+//                 SeqAn - The Library for Sequence Analysis
 // ==========================================================================
 // Copyright (c) 2006-2013, Knut Reinert, FU Berlin
 // All rights reserved.
@@ -35,12 +35,291 @@
 #include <seqan/basic.h>
 #include <seqan/file.h>
 
-#include "test_align_profile.h"
+#include <seqan/align_profile.h>
 
+// A simple test for the ProfileChar type.
+SEQAN_DEFINE_TEST(test_align_profile_profile_test)
+{
+    typedef seqan::ProfileChar<seqan::Dna, int> TDnaProfile;
+    seqan::String<TDnaProfile> profile = "CGAT";
+
+    SEQAN_ASSERT_EQ(length(profile), 4u);
+
+    SEQAN_ASSERT_EQ(profile[0].count[0], 0);
+    SEQAN_ASSERT_EQ(profile[0].count[1], 1);
+    SEQAN_ASSERT_EQ(profile[0].count[2], 0);
+    SEQAN_ASSERT_EQ(profile[0].count[3], 0);
+    SEQAN_ASSERT_EQ(profile[0].count[4], 0);
+
+    SEQAN_ASSERT_EQ(profile[1].count[0], 0);
+    SEQAN_ASSERT_EQ(profile[1].count[1], 0);
+    SEQAN_ASSERT_EQ(profile[1].count[2], 1);
+    SEQAN_ASSERT_EQ(profile[1].count[3], 0);
+    SEQAN_ASSERT_EQ(profile[1].count[4], 0);
+
+    SEQAN_ASSERT_EQ(profile[2].count[0], 1);
+    SEQAN_ASSERT_EQ(profile[2].count[1], 0);
+    SEQAN_ASSERT_EQ(profile[2].count[2], 0);
+    SEQAN_ASSERT_EQ(profile[2].count[3], 0);
+    SEQAN_ASSERT_EQ(profile[2].count[4], 0);
+
+    SEQAN_ASSERT_EQ(profile[3].count[0], 0);
+    SEQAN_ASSERT_EQ(profile[3].count[1], 0);
+    SEQAN_ASSERT_EQ(profile[3].count[2], 0);
+    SEQAN_ASSERT_EQ(profile[3].count[3], 1);
+    SEQAN_ASSERT_EQ(profile[3].count[4], 0);
+}
+
+// Align a profile with a sequence.
+SEQAN_DEFINE_TEST(test_align_profile_align_profile_sequence)
+{
+    typedef seqan::ProfileChar<seqan::Dna, int> TDnaProfile;
+    typedef seqan::String<TDnaProfile> TProfileString;
+
+    TProfileString profile = "CGAT";
+    seqan::DnaString seq = "CGGAAT";
+
+    seqan::Gaps<TProfileString> gapsH(profile);
+    seqan::Gaps<seqan::DnaString> gapsV(seq);
+
+    seqan::Score<int, seqan::ProfileSeqScore> sScheme(profile);
+    
+    int val = globalAlignment(gapsH, gapsV, sScheme, seqan::NeedlemanWunsch());
+    SEQAN_ASSERT_EQ(val, -2097152);
+
+    SEQAN_ASSERT_EQ(length(gapsV), 6u);
+    for (unsigned i = 0; i < 6u; ++i)
+        SEQAN_ASSERT_NOT_MSG(isGap(gapsV, i), "i == %u", i);
+
+    SEQAN_ASSERT_EQ(length(gapsH), 6u);
+    SEQAN_ASSERT_NOT(isGap(gapsH, 0));
+    SEQAN_ASSERT(isGap(gapsH, 1));
+    SEQAN_ASSERT_NOT(isGap(gapsH, 2));
+    SEQAN_ASSERT(isGap(gapsH, 3));
+    SEQAN_ASSERT_NOT(isGap(gapsH, 4));
+    SEQAN_ASSERT_NOT(isGap(gapsH, 5));
+}
+
+// Call addToProfile() on a profile and a sequence.
+//
+// This will first align the sequence to the profile and then update the profile with the alignment information.
+SEQAN_DEFINE_TEST(test_align_profile_add_to_profile)
+{
+    typedef seqan::ProfileChar<seqan::Dna, int> TDnaProfile;
+    typedef seqan::String<TDnaProfile> TProfileString;
+
+    TProfileString profile = "CGAT";
+    seqan::DnaString seq = "CGGAAT";
+
+    addToProfile(profile, seq);
+
+    SEQAN_ASSERT_EQ(length(profile), 6u);
+
+    SEQAN_ASSERT_EQ(profile[0].count[0], 0);
+    SEQAN_ASSERT_EQ(profile[0].count[1], 2);
+    SEQAN_ASSERT_EQ(profile[0].count[2], 0);
+    SEQAN_ASSERT_EQ(profile[0].count[3], 0);
+    SEQAN_ASSERT_EQ(profile[0].count[4], 0);
+
+    SEQAN_ASSERT_EQ(profile[1].count[0], 0);
+    SEQAN_ASSERT_EQ(profile[1].count[1], 0);
+    SEQAN_ASSERT_EQ(profile[1].count[2], 2);
+    SEQAN_ASSERT_EQ(profile[1].count[3], 0);
+    SEQAN_ASSERT_EQ(profile[1].count[4], 0);
+
+    SEQAN_ASSERT_EQ(profile[2].count[0], 0);
+    SEQAN_ASSERT_EQ(profile[2].count[1], 0);
+    SEQAN_ASSERT_EQ(profile[2].count[2], 1);
+    SEQAN_ASSERT_EQ(profile[2].count[3], 0);
+    SEQAN_ASSERT_EQ(profile[2].count[4], 1);
+
+    SEQAN_ASSERT_EQ(profile[3].count[0], 1);
+    SEQAN_ASSERT_EQ(profile[3].count[1], 0);
+    SEQAN_ASSERT_EQ(profile[3].count[2], 0);
+    SEQAN_ASSERT_EQ(profile[3].count[3], 0);
+    SEQAN_ASSERT_EQ(profile[3].count[4], 1);
+
+    SEQAN_ASSERT_EQ(profile[4].count[0], 2);
+    SEQAN_ASSERT_EQ(profile[4].count[1], 0);
+    SEQAN_ASSERT_EQ(profile[4].count[2], 0);
+    SEQAN_ASSERT_EQ(profile[4].count[3], 0);
+    SEQAN_ASSERT_EQ(profile[4].count[4], 0);
+
+    SEQAN_ASSERT_EQ(profile[5].count[0], 0);
+    SEQAN_ASSERT_EQ(profile[5].count[1], 0);
+    SEQAN_ASSERT_EQ(profile[5].count[2], 0);
+    SEQAN_ASSERT_EQ(profile[5].count[3], 2);
+    SEQAN_ASSERT_EQ(profile[5].count[4], 0);
+}
+
+// Call addToProfile() three times.
+SEQAN_DEFINE_TEST(test_align_profile_add_to_profile_multiple)
+{
+    typedef seqan::ProfileChar<seqan::Dna, int> TDnaProfile;
+    typedef seqan::String<TDnaProfile> TProfileString;
+
+    TProfileString profile = "CGAT";
+    seqan::DnaString seq1 = "CGGAAT";
+    seqan::DnaString seq2 = "CGGAT";
+    seqan::DnaString seq3 = "AGAAT";
+
+    addToProfile(profile, seq1);
+    addToProfile(profile, seq2);
+    addToProfile(profile, seq3);
+
+    SEQAN_ASSERT_EQ(length(profile), 6u);
+
+    SEQAN_ASSERT_EQ(profile[0].count[0], 1);
+    SEQAN_ASSERT_EQ(profile[0].count[1], 3);
+    SEQAN_ASSERT_EQ(profile[0].count[2], 0);
+    SEQAN_ASSERT_EQ(profile[0].count[3], 0);
+    SEQAN_ASSERT_EQ(profile[0].count[4], 0);
+
+    SEQAN_ASSERT_EQ(profile[1].count[0], 0);
+    SEQAN_ASSERT_EQ(profile[1].count[1], 0);
+    SEQAN_ASSERT_EQ(profile[1].count[2], 4);
+    SEQAN_ASSERT_EQ(profile[1].count[3], 0);
+    SEQAN_ASSERT_EQ(profile[1].count[4], 0);
+
+    SEQAN_ASSERT_EQ(profile[2].count[0], 1);
+    SEQAN_ASSERT_EQ(profile[2].count[1], 0);
+    SEQAN_ASSERT_EQ(profile[2].count[2], 2);
+    SEQAN_ASSERT_EQ(profile[2].count[3], 0);
+    SEQAN_ASSERT_EQ(profile[2].count[4], 1);
+
+    SEQAN_ASSERT_EQ(profile[3].count[0], 1);
+    SEQAN_ASSERT_EQ(profile[3].count[1], 0);
+    SEQAN_ASSERT_EQ(profile[3].count[2], 0);
+    SEQAN_ASSERT_EQ(profile[3].count[3], 0);
+    SEQAN_ASSERT_EQ(profile[3].count[4], 3);
+
+    SEQAN_ASSERT_EQ(profile[4].count[0], 4);
+    SEQAN_ASSERT_EQ(profile[4].count[1], 0);
+    SEQAN_ASSERT_EQ(profile[4].count[2], 0);
+    SEQAN_ASSERT_EQ(profile[4].count[3], 0);
+    SEQAN_ASSERT_EQ(profile[4].count[4], 0);
+
+    SEQAN_ASSERT_EQ(profile[5].count[0], 0);
+    SEQAN_ASSERT_EQ(profile[5].count[1], 0);
+    SEQAN_ASSERT_EQ(profile[5].count[2], 0);
+    SEQAN_ASSERT_EQ(profile[5].count[3], 4);
+    SEQAN_ASSERT_EQ(profile[5].count[4], 0);
+}
+
+// Call addToProfile() on a profile and a sequence.
+//
+// This will first align the sequence to the profile and then update the profile with the alignment information.
+SEQAN_DEFINE_TEST(test_align_profile_add_to_profile_banded)
+{
+    typedef seqan::ProfileChar<seqan::Dna, int> TDnaProfile;
+    typedef seqan::String<TDnaProfile> TProfileString;
+
+    TProfileString profile = "CGAT";
+    seqan::DnaString seq = "CGGAAT";
+
+    addToProfile(profile, seq, -3, 3);
+
+    SEQAN_ASSERT_EQ(length(profile), 6u);
+
+    SEQAN_ASSERT_EQ(profile[0].count[0], 0);
+    SEQAN_ASSERT_EQ(profile[0].count[1], 2);
+    SEQAN_ASSERT_EQ(profile[0].count[2], 0);
+    SEQAN_ASSERT_EQ(profile[0].count[3], 0);
+    SEQAN_ASSERT_EQ(profile[0].count[4], 0);
+
+    SEQAN_ASSERT_EQ(profile[1].count[0], 0);
+    SEQAN_ASSERT_EQ(profile[1].count[1], 0);
+    SEQAN_ASSERT_EQ(profile[1].count[2], 2);
+    SEQAN_ASSERT_EQ(profile[1].count[3], 0);
+    SEQAN_ASSERT_EQ(profile[1].count[4], 0);
+
+    SEQAN_ASSERT_EQ(profile[2].count[0], 0);
+    SEQAN_ASSERT_EQ(profile[2].count[1], 0);
+    SEQAN_ASSERT_EQ(profile[2].count[2], 1);
+    SEQAN_ASSERT_EQ(profile[2].count[3], 0);
+    SEQAN_ASSERT_EQ(profile[2].count[4], 1);
+
+    SEQAN_ASSERT_EQ(profile[3].count[0], 1);
+    SEQAN_ASSERT_EQ(profile[3].count[1], 0);
+    SEQAN_ASSERT_EQ(profile[3].count[2], 0);
+    SEQAN_ASSERT_EQ(profile[3].count[3], 0);
+    SEQAN_ASSERT_EQ(profile[3].count[4], 1);
+
+    SEQAN_ASSERT_EQ(profile[4].count[0], 2);
+    SEQAN_ASSERT_EQ(profile[4].count[1], 0);
+    SEQAN_ASSERT_EQ(profile[4].count[2], 0);
+    SEQAN_ASSERT_EQ(profile[4].count[3], 0);
+    SEQAN_ASSERT_EQ(profile[4].count[4], 0);
+
+    SEQAN_ASSERT_EQ(profile[5].count[0], 0);
+    SEQAN_ASSERT_EQ(profile[5].count[1], 0);
+    SEQAN_ASSERT_EQ(profile[5].count[2], 0);
+    SEQAN_ASSERT_EQ(profile[5].count[3], 2);
+    SEQAN_ASSERT_EQ(profile[5].count[4], 0);
+}
+
+// Call addToProfile() three times.
+SEQAN_DEFINE_TEST(test_align_profile_add_to_profile_multiple_banded)
+{
+    typedef seqan::ProfileChar<seqan::Dna, int> TDnaProfile;
+    typedef seqan::String<TDnaProfile> TProfileString;
+
+    TProfileString profile = "CGAT";
+    seqan::DnaString seq1 = "CGGAAT";
+    seqan::DnaString seq2 = "CGGAT";
+    seqan::DnaString seq3 = "AGAAT";
+
+    addToProfile(profile, seq1, -3, 3);
+    addToProfile(profile, seq2, -3, 3);
+    addToProfile(profile, seq3, -3, 3);
+
+    SEQAN_ASSERT_EQ(length(profile), 6u);
+
+    SEQAN_ASSERT_EQ(profile[0].count[0], 1);
+    SEQAN_ASSERT_EQ(profile[0].count[1], 3);
+    SEQAN_ASSERT_EQ(profile[0].count[2], 0);
+    SEQAN_ASSERT_EQ(profile[0].count[3], 0);
+    SEQAN_ASSERT_EQ(profile[0].count[4], 0);
+
+    SEQAN_ASSERT_EQ(profile[1].count[0], 0);
+    SEQAN_ASSERT_EQ(profile[1].count[1], 0);
+    SEQAN_ASSERT_EQ(profile[1].count[2], 4);
+    SEQAN_ASSERT_EQ(profile[1].count[3], 0);
+    SEQAN_ASSERT_EQ(profile[1].count[4], 0);
+
+    SEQAN_ASSERT_EQ(profile[2].count[0], 1);
+    SEQAN_ASSERT_EQ(profile[2].count[1], 0);
+    SEQAN_ASSERT_EQ(profile[2].count[2], 2);
+    SEQAN_ASSERT_EQ(profile[2].count[3], 0);
+    SEQAN_ASSERT_EQ(profile[2].count[4], 1);
+
+    SEQAN_ASSERT_EQ(profile[3].count[0], 1);
+    SEQAN_ASSERT_EQ(profile[3].count[1], 0);
+    SEQAN_ASSERT_EQ(profile[3].count[2], 0);
+    SEQAN_ASSERT_EQ(profile[3].count[3], 0);
+    SEQAN_ASSERT_EQ(profile[3].count[4], 3);
+
+    SEQAN_ASSERT_EQ(profile[4].count[0], 4);
+    SEQAN_ASSERT_EQ(profile[4].count[1], 0);
+    SEQAN_ASSERT_EQ(profile[4].count[2], 0);
+    SEQAN_ASSERT_EQ(profile[4].count[3], 0);
+    SEQAN_ASSERT_EQ(profile[4].count[4], 0);
+
+    SEQAN_ASSERT_EQ(profile[5].count[0], 0);
+    SEQAN_ASSERT_EQ(profile[5].count[1], 0);
+    SEQAN_ASSERT_EQ(profile[5].count[2], 0);
+    SEQAN_ASSERT_EQ(profile[5].count[3], 4);
+    SEQAN_ASSERT_EQ(profile[5].count[4], 0);
+}
 
 SEQAN_BEGIN_TESTSUITE(test_align_profile)
 {
-    // Call tests.
-	SEQAN_CALL_TEST(test_align_profile_strings_example1);
+	SEQAN_CALL_TEST(test_align_profile_profile_test);
+
+	SEQAN_CALL_TEST(test_align_profile_align_profile_sequence);
+    SEQAN_CALL_TEST(test_align_profile_add_to_profile);
+    SEQAN_CALL_TEST(test_align_profile_add_to_profile_multiple);
+    SEQAN_CALL_TEST(test_align_profile_add_to_profile_banded);
+    SEQAN_CALL_TEST(test_align_profile_add_to_profile_multiple_banded);
 }
 SEQAN_END_TESTSUITE
